@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MyLinks – Free Linktree</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0c0c10;
+    --surface: #16161e;
+    --border: #2a2a38;
+    --accent: #c8f564;
+    --accent2: #7b5cf0;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --radius: 18px;
+    --link-h: 60px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 16px 60px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Ambient blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .blob1 { width: 400px; height: 400px; background: var(--accent2); top: -120px; right: -100px; }
+  .blob2 { width: 300px; height: 300px; background: var(--accent); bottom: 100px; left: -80px; }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 56px;
+  }
+
+  /* --- AVATAR --- */
+  .avatar-wrap {
+    position: relative;
+    width: 96px; height: 96px;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+  .avatar-wrap input[type="file"] { display: none; }
+  .avatar {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--border);
+    transition: border-color .25s;
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .avatar-placeholder {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    color: #0c0c10;
+    border: 3px solid var(--border);
+    transition: transform .2s;
+  }
+  .avatar-wrap:hover .avatar-placeholder { transform: scale(1.06); border-color: var(--accent); }
+  .avatar-edit-badge {
+    position: absolute; bottom: 2px; right: 2px;
+    background: var(--accent); color: #0c0c10;
+    border-radius: 50%; width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  }
+  .avatar-preview {
+    width: 96px; height: 96px; border-radius: 50%; object-fit: cover;
+    border: 3px solid var(--accent);
+  }
+
+  /* --- NAME & BIO --- */
+  .name-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 6px;
+  }
+  [contenteditable] {
+    outline: none;
+    border-bottom: 1px dashed transparent;
+    transition: border-color .2s;
+  }
+  [contenteditable]:hover, [contenteditable]:focus {
+    border-bottom-color: var(--muted);
+  }
+  .display-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.55rem;
+    letter-spacing: -0.02em;
+  }
+  .bio {
+    font-size: .92rem;
+    color: var(--muted);
+    text-align: center;
+    max-width: 340px;
+    line-height: 1.55;
+    margin-bottom: 32px;
+  }
+
+  /* --- LINKS --- */
+  .links-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .link-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideUp .35s ease both;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .link-btn {
+    flex: 1;
+    height: var(--link-h);
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    display: flex; align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform .18s, border-color .18s, background .18s;
+    text-decoration: none;
+    color: var(--text);
+    position: relative;
+    overflow: hidden;
+  }
+  .link-btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--accent2)22, transparent 60%);
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .link-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent2);
+    background: #1c1c28;
+  }
+  .link-btn:hover::after { opacity: 1; }
+  .link-btn:active { transform: translateY(0px); }
+
+  .link-icon {
+    font-size: 1.2rem;
+    width: 28px; text-align: center;
+    flex-shrink: 0;
+  }
+  .link-label {
+    font-size: .97rem;
+    font-weight: 500;
+    flex: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .link-arrow {
+    color: var(--muted);
+    font-size: .8rem;
+    flex-shrink: 0;
+  }
+
+  /* edit mode */
+  .link-item.editing .link-btn { display: none; }
+  .link-edit-form {
+    display: none;
+    flex: 1;
+    background: var(--surface);
+    border: 1.5px solid var(--accent2);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    gap: 8px;
+    flex-direction: column;
+  }
+  .link-item.editing .link-edit-form { display: flex; }
+  .link-edit-form input {
+    background: #0f0f18;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: .9rem;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .link-edit-form input:focus { border-color: var(--accent); }
+  .link-edit-form input::placeholder { color: var(--muted); }
+  .form-row { display: flex; gap: 8px; }
+  .form-row input { flex: 1; }
+  .form-actions { display: flex; gap: 8px; }
+  .btn-save {
+    flex: 1;
+    padding: 8px;
+    background: var(--accent);
+    color: #0c0c10;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: .88rem;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    transition: opacity .15s;
+  }
+  .btn-save:hover { opacity: .85; }
+  .btn-cancel {
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: .88rem;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+
+  /* side controls */
+  .link-controls {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .ctrl-btn {
+    width: 32px; height: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: .85rem;
+    color: var(--muted);
+    transition: color .15s, border-color .15s;
+  }
+  .ctrl-btn:hover { color: var(--text); border-color: var(--text); }
+  .ctrl-btn.del:hover { color: #ff5f5f; border-color: #ff5f5f; }
+  .ctrl-btn.edit-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* --- ADD LINK --- */
+  .add-btn {
+    width: 100%;
+    height: 56px;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--muted);
+    font-size: .95rem;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: border-color .2s, color .2s;
+    margin-bottom: 32px;
+  }
+  .add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* --- FOOTER --- */
+  .footer {
+    font-size: .78rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  .footer span {
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 600;
+  }
+
+  /* --- SHARE TOAST --- */
+  .toast {
+    position: fixed;
+    bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--accent); color: #0c0c10;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-weight: 700; font-size: .88rem;
+    font-family: 'Syne', sans-serif;
+    opacity: 0;
+    transition: transform .3s, opacity .3s;
+    pointer-events: none;
+    z-index: 99;
+    white-space: nowrap;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+
+<div class="container">
+  <!-- Avatar -->
+  <div class="avatar-wrap" onclick="document.getElementById('avatarInput').click()" title="Click to change photo">
+    <input type="file" id="avatarInput" accept="image/*" onchange="handleAvatar(event)" />
+    <div class="avatar-placeholder" id="avatarPlaceholder">H</div>
+    <img id="avatarImg" style="display:none" class="avatar-preview" />
+    <div class="avatar-edit-badge">✎</div>
+  </div>
+
+  <!-- Name -->
+  <div class="name-row">
+    <div class="display-name" contenteditable="true" id="displayName" title="Click to edit name">Himanshu</div>
+  </div>
+
+  <!-- Bio -->
+  <div class="bio" contenteditable="true" id="bioText" title="Click to edit bio">
+    CSE Student · Diploma → B.Tech Lateral Entry 🎯<br/>Building skills, one line of code at a time.
+  </div>
+
+  <!-- Links -->
+  <div class="links-list" id="linksList"></div>
+
+  <!-- Add Link -->
+  <button class="add-btn" onclick="addLink()">
+    <span style="font-size:1.2rem">+</span> Add new link
+  </button>
+
+  <div class="footer">Made with <span>MyLinks</span> · Free forever</div>
+</div>
+
+<div class="toast" id="toast">✓ Link copied!</div>
+
+<script>
+const ICONS = { default:'🔗', github:'🐱', instagram:'📸', linkedin:'💼', youtube:'▶️', twitter:'🐦', email:'✉️', website:'🌐', whatsapp:'💬', telegram:'✈️' };
+
+let links = [
+  { id: 1, label: 'GitHub Profile', url: 'https://github.com', icon: '🐱' },
+  { id: 2, label: 'LinkedIn',       url: 'https://linkedin.com', icon: '💼' },
+  { id: 3, label: 'My Resume',      url: '#', icon: '📄' },
+];
+let nextId = 4;
+
+function renderLinks() {
+  const list = document.getElementById('linksList');
+  list.innerHTML = '';
+  links.forEach((link, i) => {
+    const item = document.createElement('div');
+    item.className = 'link-item';
+    item.dataset.id = link.id;
+    item.style.animationDelay = (i * 0.06) + 's';
+    item.innerHTML = `
+      <a class="link-btn" href="${link.url}" target="_blank" rel="noopener">
+        <span class="link-icon">${link.icon}</span>
+        <span class="link-label">${link.label}</span>
+        <span class="link-arrow">↗</span>
+      </a>
+      <div class="link-edit-form">
+        <div class="form-row">
+          <input placeholder="Label (e.g. My GitHub)" value="${link.label}" class="inp-label" />
+          <input placeholder="Icon emoji (e.g. 🐱)" value="${link.icon}" class="inp-icon" style="width:70px;flex:none" />
+        </div>
+        <input placeholder="URL (https://...)" value="${link.url}" class="inp-url" />
+        <div class="form-actions">
+          <button class="btn-save" onclick="saveLink(${link.id}, this)">Save</button>
+          <button class="btn-cancel" onclick="cancelEdit(${link.id})">Cancel</button>
+        </div>
+      </div>
+      <div class="link-controls">
+        <button class="ctrl-btn edit-btn" title="Edit" onclick="startEdit(${link.id})">✎</button>
+        <button class="ctrl-btn del" title="Delete" onclick="deleteLink(${link.id})">✕</button>
+      </div>`;
+    list.appendChild(item);
+  });
+}
+
+function startEdit(id) {
+  document.querySelector(`[data-id="${id}"]`).classList.add('editing');
+}
+function cancelEdit(id) {
+  document.querySelector(`[data-id="${id}"]`).classList.remove('editing');
+}
+function saveLink(id, btn) {
+  const item = document.querySelector(`[data-id="${id}"]`);
+  const label = item.querySelector('.inp-label').value.trim() || 'My Link';
+  const icon  = item.querySelector('.inp-icon').value.trim()  || '🔗';
+  const url   = item.querySelector('.inp-url').value.trim()   || '#';
+  const link = links.find(l => l.id === id);
+  if (link) { link.label = label; link.icon = icon; link.url = url; }
+  renderLinks();
+  showToast('✓ Saved!');
+}
+function deleteLink(id) {
+  links = links.filter(l => l.id !== id);
+  renderLinks();
+}
+function addLink() {
+  links.push({ id: nextId++, label: 'New Link', url: 'https://', icon: '🔗' });
+  renderLinks();
+  // auto-open edit for the new link
+  startEdit(links[links.length-1].id);
+}
+
+function handleAvatar(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('avatarPlaceholder').style.display = 'none';
+    const img = document.getElementById('avatarImg');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Update avatar initial from name
+document.getElementById('displayName').addEventListener('input', function() {
+  if (document.getElementById('avatarImg').style.display === 'none') {
+    document.getElementById('avatarPlaceholder').textContent = (this.textContent[0] || '?').toUpperCase();
+  }
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+renderLinks();
+</script>
+</body>
+</html>
